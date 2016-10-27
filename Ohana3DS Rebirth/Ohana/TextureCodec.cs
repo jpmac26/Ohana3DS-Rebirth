@@ -323,7 +323,7 @@ namespace Ohana3DS_Rebirth.Ohana
         {
             byte[] data = TextureUtils.getArray(img);
             byte[] output = new byte[data.Length];
-
+            bool toggle = false;
             uint outputOffset = 0;
             switch (format)
             {
@@ -342,6 +342,24 @@ namespace Ohana3DS_Rebirth.Ohana
                                 output[outputOffset] = data[dataOffset + 3];
 
                                 outputOffset += 4;
+                            }
+                        }
+                    }
+                    break;
+                case RenderBase.OTextureFormat.rgb8:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + ((tY * 8 + y) * img.Width)) * 4;
+
+                                Buffer.BlockCopy(data, (int)dataOffset, output, (int)outputOffset + 1, 3);
+
+                                outputOffset += 3;
                             }
                         }
                     }
@@ -415,6 +433,140 @@ namespace Ohana3DS_Rebirth.Ohana
                                 output[outputOffset] = (byte)((b << 4) | a);
 
                                 outputOffset += 2;
+                            }
+                        }
+                    }
+                    break;
+                case RenderBase.OTextureFormat.la8:
+                case RenderBase.OTextureFormat.hilo8:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                output[outputOffset] = data[dataOffset];
+                                output[outputOffset + 1] = data[dataOffset + 3];
+
+                                outputOffset += 2;
+                            }
+                        }
+                    }
+                    break;
+                case RenderBase.OTextureFormat.l8:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                output[outputOffset] = data[dataOffset];
+
+                                outputOffset++;
+                            }
+                        }
+                    }
+                    break;
+
+                case RenderBase.OTextureFormat.a8:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                output[outputOffset] = data[dataOffset+3];
+
+                                outputOffset++;
+                            }
+                        }
+                    }
+                    break;
+
+                case RenderBase.OTextureFormat.la4:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                output[outputOffset] = (byte)(data[dataOffset] << 4 | data[dataOffset + 3] & 0xf);
+
+                                outputOffset++;
+                            }
+                        }
+                    }
+                    break;
+
+                case RenderBase.OTextureFormat.l4:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+
+                                byte c = (byte)(data[dataOffset++] >> 4);
+                                byte wholeByte = 0;
+                                if (toggle) {
+                                    wholeByte = (byte)((wholeByte << 4) | (data[dataOffset++] >> 4));
+                                    output[outputOffset] = wholeByte;
+                                    outputOffset++;
+                                }
+                                else
+                                {
+                                    wholeByte = c;
+                                }
+                                toggle = !toggle;
+                            }
+                        }
+                    }
+                    break;
+
+                case RenderBase.OTextureFormat.a4:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                byte c = (byte)(data[dataOffset + 3] >> 4);
+                                byte wholeByte = 0;
+                                if (toggle)
+                                {
+                                    wholeByte = (byte)((wholeByte << 4) | (data[dataOffset++] >> 4));
+                                    output[outputOffset] = wholeByte;
+                                    outputOffset++;
+                                }
+                                else
+                                {
+                                    wholeByte = c;
+                                }
+                                toggle = !toggle;
                             }
                         }
                     }
