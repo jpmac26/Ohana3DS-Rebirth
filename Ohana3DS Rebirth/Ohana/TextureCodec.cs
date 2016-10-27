@@ -506,7 +506,7 @@ namespace Ohana3DS_Rebirth.Ohana
                                 int y = (tileOrder[pixel] - x) / 8;
                                 long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
 
-                                output[outputOffset] = (byte)(data[dataOffset] << 4 | data[dataOffset + 3] & 0xf);
+                                output[outputOffset] = (byte)((data[dataOffset]/16)<< 4 | data[dataOffset + 3]/16);
 
                                 outputOffset++;
                             }
