@@ -346,6 +346,79 @@ namespace Ohana3DS_Rebirth.Ohana
                         }
                     }
                     break;
+                case RenderBase.OTextureFormat.rgba5551:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                ulong pixelData = (ulong)(data[dataOffset]);
+
+                                byte b = (byte)(data[dataOffset]);
+                                byte g = (byte)(data[dataOffset + 1]);
+                                byte r = (byte)(data[dataOffset + 2]);
+                                byte a = (byte)(data[dataOffset + 3]);
+
+                                output[outputOffset] = (byte)((((g >> 3) & 3) << 6) + ((b >> 3) << 1) + (a & 1)); 
+                                output[outputOffset + 1] = (byte)(((r >> 3) << 3) + (g >> 5));
+
+                                outputOffset += 2;
+                            }
+                        }
+                    }
+                    break;
+                case RenderBase.OTextureFormat.rgb565:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                byte b = (byte)(data[dataOffset] / 8);
+                                byte g = (byte)(data[dataOffset+1] / 4);
+                                byte r = (byte)(data[dataOffset+2] / 8);
+
+                                output[outputOffset] = (byte)(((g & 7) << 5) | b); 
+                                output[outputOffset + 1] = (byte)((r << 3) | ((g & 0x38) >> 3));
+
+                                outputOffset += 2;
+                            }
+                        }
+                    }
+                    break;
+                case RenderBase.OTextureFormat.rgba4:
+                    for (int tY = 0; tY < img.Height / 8; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 8; tX++)
+                        {
+                            for (int pixel = 0; pixel < 64; pixel++)
+                            {
+                                int x = tileOrder[pixel] % 8;
+                                int y = (tileOrder[pixel] - x) / 8;
+                                long dataOffset = ((tX * 8) + x + (((tY * 8 + y)) * img.Width)) * 4;
+
+                                byte b = (byte)(data[dataOffset] / 16);
+                                byte g = (byte)(data[dataOffset+1] / 16);
+                                byte r = (byte)(data[dataOffset+2] / 16);
+                                byte a = (byte)(data[dataOffset+3] / 16);
+
+                                output[outputOffset + 1] = (byte)((r << 4) |g);
+                                output[outputOffset] = (byte)((b << 4) | a);
+
+                                outputOffset += 2;
+                            }
+                        }
+                    }
+                    break;
 
                 default: throw new NotImplementedException();
             }

@@ -23,6 +23,7 @@ namespace Ohana3DS_Rebirth.Tools
             public uint offset;
             public int length;
             public RenderBase.OTexture texture;
+            public RenderBase.OTextureFormat type;
         }
 
         private struct loadedMaterial
@@ -175,6 +176,7 @@ namespace Ohana3DS_Rebirth.Tools
                     tex.offset = textureCommands.getTexUnit0Address() + dataOffset;
                     RenderBase.OTextureFormat fmt = textureCommands.getTexUnit0Format();
                     Size textureSize = textureCommands.getTexUnit0Size();
+                    tex.type = fmt;
                     switch (fmt)
                     {
                         case RenderBase.OTextureFormat.rgba8: tex.length = (textureSize.Width * textureSize.Height) * 4; break;
@@ -373,101 +375,14 @@ namespace Ohana3DS_Rebirth.Tools
 
                     if (tex.modified)
                     {
-                        byte[] buffer = align(TextureCodec.encode(tex.texture.texture, RenderBase.OTextureFormat.rgba8));
+                        byte[] buffer = align(TextureCodec.encode(tex.texture.texture, tex.type));
                         int diff = buffer.Length - tex.length;
 
                         replaceData(data, tex.offset, tex.length, buffer);
 
-                        //Update offsets of next textures
-                        tex.length = buffer.Length;
                         tex.modified = false;
                         updateTexture(i, tex);
-                        for (int j = i; j < bch.textures.Count; j++)
-                        {
-                            loadedTexture next = bch.textures[j];
-                            next.offset = (uint)(next.offset + diff);
-                            updateTexture(j, next);
-                        }
 
-                        //Update all addresses poiting after the replaced data
-                        bch.relocationTableOffset = (uint)(bch.relocationTableOffset + diff);
-                        for (int index = 0; index < bch.relocationTableLength; index += 4)
-                        {
-                            data.Seek(bch.relocationTableOffset + index, SeekOrigin.Begin);
-                            uint value = input.ReadUInt32();
-                            uint offset = value & 0x1ffffff;
-                            byte flags = (byte)(value >> 25);
-
-                            if ((flags & 0x20) > 0 || flags == 7 || flags == 0xc)
-                            {
-                                if ((flags & 0x20) > 0)
-                                    data.Seek((offset * 4) + bch.gpuCommandsOffset, SeekOrigin.Begin);
-                                else
-                                    data.Seek((offset * 4) + bch.mainHeaderOffset, SeekOrigin.Begin);
-
-                                uint address = input.ReadUInt32();
-                                if (address + bch.dataOffset > tex.offset)
-                                {
-                                    address = (uint)(address + diff);
-                                    data.Seek(-4, SeekOrigin.Current);
-                                    output.Write(address);
-                                }
-                            }
-                        }
-
-                        uint newSize = (uint)((tex.texture.texture.Width << 16) | tex.texture.texture.Height);
-
-                        //Update texture format
-                        data.Seek(tex.gpuCommandsOffset, SeekOrigin.Begin);
-                        for (int index = 0; index < tex.gpuCommandsWordCount * 3; index++)
-                        {
-                            uint command = input.ReadUInt32();
-
-                            switch (command)
-                            {
-                                case 0xf008e:
-                                case 0xf0096:
-                                case 0xf009e:
-                                    replaceCommand(data, output, 0); //Set texture format to 0 = RGBA8888
-                                    break;
-                                case 0xf0082:
-                                case 0xf0092:
-                                case 0xf009a:
-                                    replaceCommand(data, output, newSize); //Set new texture size
-                                    break;
-                            }
-                        }
-
-                        //Update material texture format
-                        foreach (loadedMaterial mat in bch.materials)
-                        {
-                            data.Seek(mat.gpuCommandsOffset, SeekOrigin.Begin);
-                            for (int index = 0; index < mat.gpuCommandsWordCount; index++)
-                            {
-                                uint command = input.ReadUInt32();
-
-                                switch (command)
-                                {
-                                    case 0xf008e: if (mat.texture0 == tex.texture.name || mat.texture0 == "") replaceCommand(data, output, 0); break;
-                                    case 0xf0096: if (mat.texture1 == tex.texture.name || mat.texture1 == "") replaceCommand(data, output, 0); break;
-                                    case 0xf009e: if (mat.texture2 == tex.texture.name || mat.texture2 == "") replaceCommand(data, output, 0); break;
-                                }
-                            }
-                        }
-
-                        //Patch up BCH header for new offsets and lengths
-                        data.Seek(4, SeekOrigin.Begin);
-                        byte backwardCompatibility = input.ReadByte();
-                        byte forwardCompatibility = input.ReadByte();
-
-                        //Update Data Extended and Relocation Table offsets
-                        data.Seek(18, SeekOrigin.Current);
-                        if (backwardCompatibility > 0x20) updateAddress(data, input, output, diff);
-                        updateAddress(data, input, output, diff);
-
-                        //Update data length
-                        data.Seek(12, SeekOrigin.Current);
-                        updateAddress(data, input, output, diff);
                     }
                 }
             }
@@ -493,13 +408,8 @@ namespace Ohana3DS_Rebirth.Tools
 
         private void replaceData(Stream data, uint offset, int length, byte[] newData)
         {
-            data.Seek(offset + length, SeekOrigin.Begin);
-            byte[] after = new byte[data.Length - data.Position];
-            data.Read(after, 0, after.Length);
-            data.SetLength(offset);
             data.Seek(offset, SeekOrigin.Begin);
-            data.Write(newData, 0, newData.Length);
-            data.Write(after, 0, after.Length);
+            data.Write(newData, 0, length);
         }
 
         private void updateAddress(Stream data, BinaryReader input, BinaryWriter output, int diff)
