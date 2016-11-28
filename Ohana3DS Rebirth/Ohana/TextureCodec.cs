@@ -631,7 +631,58 @@ namespace Ohana3DS_Rebirth.Ohana
 
             return output;
         }
+        private static byte[] etc1Encode(byte[] input, int width, int height, bool alpha)
+        {
+            byte[] output = new byte[(width * height * 4)];
+            long offset = 0;
 
+            for (int y = 0; y < height / 4; y++)
+            {
+                for (int x = 0; x < width / 4; x++)
+                {
+                    byte[] colorBlock = new byte[8];
+                    byte[] alphaBlock = new byte[8];
+                    if (alpha)
+                    {
+                        for (int i = 0; i < 8; i++)
+                        {
+                            colorBlock[7 - i] = input[offset + 8 + i];
+                            alphaBlock[i] = input[offset + i];
+                        }
+                        offset += 16;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 8; i++)
+                        {
+                            colorBlock[7 - i] = input[offset + i];
+                            alphaBlock[i] = 0xff;
+                        }
+                        offset += 8;
+                    }
+
+                    colorBlock = etc1DecodeBlock(colorBlock);
+
+                    bool toggle = false;
+                    long alphaOffset = 0;
+                    for (int tX = 0; tX < 4; tX++)
+                    {
+                        for (int tY = 0; tY < 4; tY++)
+                        {
+                            int outputOffset = (x * 4 + tX + ((y * 4 + tY) * width)) * 4;
+                            int blockOffset = (tX + (tY * 4)) * 4;
+                            Buffer.BlockCopy(colorBlock, blockOffset, output, outputOffset, 3);
+
+                            byte a = toggle ? (byte)((alphaBlock[alphaOffset++] & 0xf0) >> 4) : (byte)(alphaBlock[alphaOffset] & 0xf);
+                            output[outputOffset + 3] = (byte)((a << 4) | a);
+                            toggle = !toggle;
+                        }
+                    }
+                }
+            }
+
+            return output;
+        }
         private static byte[] etc1DecodeBlock(byte[] data)
         {
             uint blockTop = BitConverter.ToUInt32(data, 0);

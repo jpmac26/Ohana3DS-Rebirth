@@ -71,19 +71,37 @@ namespace Ohana3DS_Rebirth.Tools
             {
                 BinaryWriter writer = new BinaryWriter(output);
 
-                writer.Write((ushort)5);
+                writer.Write((ushort)6);
                 writer.Write((ushort)0xffff);
-                writer.Write((uint)4);
                 writer.Write((uint)0);
-                writer.Write(model.mesh.Count);
+                writer.Write((uint)1);
+                writer.Write((uint)model.mesh.Count);
 
                 List<mesh> meshes = new List<mesh>();
                 foreach (RenderBase.OMesh mesh in model.mesh) meshes.Add(createMesh(mesh));
 
+                writer.Write((uint)5); //attributesCount - getVtxDescriptor
+                writer.Write((uint)0); //Position
+                writer.Write((uint)3); //SignedSingle
+                writer.Write((Single)0); //idk what to put in
+                writer.Write((uint)1); //Normal
+                writer.Write((uint)2); //SignedByte
+                writer.Write((Single)0); //idk what to put in
+                writer.Write((uint)3); //uvCord0
+                writer.Write((uint)3); //SignedByte
+                writer.Write((Single)3); //idk what to put in
+                writer.Write((uint)5); //BoneIndex
+                writer.Write((uint)1); //unSignedByte
+                writer.Write((Single)1); //idk what to put in
+                writer.Write((uint)6); //BoneWeight
+                writer.Write((uint)1); //unSignedByte
+                writer.Write((Single)0.1); //idk what to put in
+                writer.Write((uint)0xFFFFFFFF); // Need to get this l8r
+
                 foreach (mesh m in meshes)
                 {
                     //Face
-                    writer.Write((uint)1); //Faces count
+                    writer.Write((uint)1);//Faces count
                     writer.Write(m.descriptor.nodes.Count);
                     foreach (uint n in m.descriptor.nodes) writer.Write(n);
                     writer.Write(m.indexBuffer.Length / 2);
