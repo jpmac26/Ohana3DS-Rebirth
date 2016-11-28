@@ -1547,6 +1547,8 @@ namespace Ohana3DS_Rebirth.Ohana.Models
                     boneMatrix.M33 = input.ReadSingle();
                     boneMatrix.M43 = input.ReadSingle();
 
+                    bone.invTransform = boneMatrix;
+
                     bone.name = readString(input);
 
                     uint metaDataPointerOffset = input.ReadUInt32();
