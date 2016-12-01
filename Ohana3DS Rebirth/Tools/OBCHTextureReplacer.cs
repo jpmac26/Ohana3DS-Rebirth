@@ -95,7 +95,7 @@ namespace Ohana3DS_Rebirth.Tools
         {
             using (OpenFileDialog openDlg = new OpenFileDialog())
             {
-                openDlg.Filter = "All supported files|*.bch";
+                openDlg.Filter = "All supported files|*.bch;*.ctpk";
 
                 if (openDlg.ShowDialog() == DialogResult.OK && File.Exists(openDlg.FileName))
                 {
@@ -125,138 +125,143 @@ namespace Ohana3DS_Rebirth.Tools
                 BinaryReader input = new BinaryReader(data);
 
                 string magic = IOUtils.readString(input, 0);
-                if (magic != "BCH") return false;
-                currentFile = fileName;
-                data.Seek(4, SeekOrigin.Current);
-                byte backwardCompatibility = input.ReadByte();
-                byte forwardCompatibility = input.ReadByte();
-                ushort version = input.ReadUInt16();
-
-                uint mainHeaderOffset = input.ReadUInt32();
-                uint stringTableOffset = input.ReadUInt32();
-                uint gpuCommandsOffset = input.ReadUInt32();
-                uint dataOffset = input.ReadUInt32();
-                uint dataExtendedOffset = backwardCompatibility > 0x20 ? input.ReadUInt32() : 0;
-                uint relocationTableOffset = input.ReadUInt32();
-
-                uint mainHeaderLength = input.ReadUInt32();
-                uint stringTableLength = input.ReadUInt32();
-                uint gpuCommandsLength = input.ReadUInt32();
-                uint dataLength = input.ReadUInt32();
-                uint dataExtendedLength = backwardCompatibility > 0x20 ? input.ReadUInt32() : 0;
-                uint relocationTableLength = input.ReadUInt32();
-
-                data.Seek(mainHeaderOffset, SeekOrigin.Begin);
-                uint modelsPointerTableOffset = input.ReadUInt32() + mainHeaderOffset;
-                uint modelsPointerTableEntries = input.ReadUInt32();
-
-                data.Seek(mainHeaderOffset + 0x24, SeekOrigin.Begin);
-                uint texturesPointerTableOffset = input.ReadUInt32() + mainHeaderOffset;
-                uint texturesPointerTableEntries = input.ReadUInt32();
-
-                bch = new loadedBCH();
-
-                //Textures
-                for (int index = 0; index < texturesPointerTableEntries; index++)
+                if (magic == "BCH")
                 {
-                    data.Seek(texturesPointerTableOffset + (index * 4), SeekOrigin.Begin);
-                    data.Seek(input.ReadUInt32() + mainHeaderOffset, SeekOrigin.Begin);
+                    currentFile = fileName;
+                    data.Seek(4, SeekOrigin.Current);
+                    byte backwardCompatibility = input.ReadByte();
+                    byte forwardCompatibility = input.ReadByte();
+                    ushort version = input.ReadUInt16();
 
-                    loadedTexture tex;
-                    tex.modified = false;
-                    tex.gpuCommandsOffset = input.ReadUInt32() + gpuCommandsOffset;
-                    tex.gpuCommandsWordCount = input.ReadUInt32();
-                    data.Seek(0x14, SeekOrigin.Current);
-                    uint textureNameOffset = input.ReadUInt32();
-                    string textureName = IOUtils.readString(input, textureNameOffset + stringTableOffset);
+                    uint mainHeaderOffset = input.ReadUInt32();
+                    uint stringTableOffset = input.ReadUInt32();
+                    uint gpuCommandsOffset = input.ReadUInt32();
+                    uint dataOffset = input.ReadUInt32();
+                    uint dataExtendedOffset = backwardCompatibility > 0x20 ? input.ReadUInt32() : 0;
+                    uint relocationTableOffset = input.ReadUInt32();
 
-                    data.Seek(tex.gpuCommandsOffset, SeekOrigin.Begin);
-                    PICACommandReader textureCommands = new PICACommandReader(data, tex.gpuCommandsWordCount);
+                    uint mainHeaderLength = input.ReadUInt32();
+                    uint stringTableLength = input.ReadUInt32();
+                    uint gpuCommandsLength = input.ReadUInt32();
+                    uint dataLength = input.ReadUInt32();
+                    uint dataExtendedLength = backwardCompatibility > 0x20 ? input.ReadUInt32() : 0;
+                    uint relocationTableLength = input.ReadUInt32();
 
-                    tex.offset = textureCommands.getTexUnit0Address() + dataOffset;
-                    RenderBase.OTextureFormat fmt = textureCommands.getTexUnit0Format();
-                    Size textureSize = textureCommands.getTexUnit0Size();
-                    tex.type = fmt;
-                    switch (fmt)
+                    data.Seek(mainHeaderOffset, SeekOrigin.Begin);
+                    uint modelsPointerTableOffset = input.ReadUInt32() + mainHeaderOffset;
+                    uint modelsPointerTableEntries = input.ReadUInt32();
+
+                    data.Seek(mainHeaderOffset + 0x24, SeekOrigin.Begin);
+                    uint texturesPointerTableOffset = input.ReadUInt32() + mainHeaderOffset;
+                    uint texturesPointerTableEntries = input.ReadUInt32();
+
+                    bch = new loadedBCH();
+
+                    //Textures
+                    for (int index = 0; index < texturesPointerTableEntries; index++)
                     {
-                        case RenderBase.OTextureFormat.rgba8: tex.length = (textureSize.Width * textureSize.Height) * 4; break;
-                        case RenderBase.OTextureFormat.rgb8: tex.length = (textureSize.Width * textureSize.Height) * 3; break;
-                        case RenderBase.OTextureFormat.rgba5551: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
-                        case RenderBase.OTextureFormat.rgb565: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
-                        case RenderBase.OTextureFormat.rgba4: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
-                        case RenderBase.OTextureFormat.la8: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
-                        case RenderBase.OTextureFormat.hilo8: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
-                        case RenderBase.OTextureFormat.l8: tex.length = textureSize.Width * textureSize.Height; break;
-                        case RenderBase.OTextureFormat.a8: tex.length = textureSize.Width * textureSize.Height; break;
-                        case RenderBase.OTextureFormat.la4: tex.length = textureSize.Width * textureSize.Height; break;
-                        case RenderBase.OTextureFormat.l4: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
-                        case RenderBase.OTextureFormat.a4: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
-                        case RenderBase.OTextureFormat.etc1: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
-                        case RenderBase.OTextureFormat.etc1a4: tex.length = textureSize.Width * textureSize.Height; break;
-                        default: throw new Exception("OBCHTextureReplacer: Invalid texture format on BCH!");
+                        data.Seek(texturesPointerTableOffset + (index * 4), SeekOrigin.Begin);
+                        data.Seek(input.ReadUInt32() + mainHeaderOffset, SeekOrigin.Begin);
+
+                        loadedTexture tex;
+                        tex.modified = false;
+                        tex.gpuCommandsOffset = input.ReadUInt32() + gpuCommandsOffset;
+                        tex.gpuCommandsWordCount = input.ReadUInt32();
+                        data.Seek(0x14, SeekOrigin.Current);
+                        uint textureNameOffset = input.ReadUInt32();
+                        string textureName = IOUtils.readString(input, textureNameOffset + stringTableOffset);
+
+                        data.Seek(tex.gpuCommandsOffset, SeekOrigin.Begin);
+                        PICACommandReader textureCommands = new PICACommandReader(data, tex.gpuCommandsWordCount);
+
+                        tex.offset = textureCommands.getTexUnit0Address() + dataOffset;
+                        RenderBase.OTextureFormat fmt = textureCommands.getTexUnit0Format();
+                        Size textureSize = textureCommands.getTexUnit0Size();
+                        tex.type = fmt;
+                        switch (fmt)
+                        {
+                            case RenderBase.OTextureFormat.rgba8: tex.length = (textureSize.Width * textureSize.Height) * 4; break;
+                            case RenderBase.OTextureFormat.rgb8: tex.length = (textureSize.Width * textureSize.Height) * 3; break;
+                            case RenderBase.OTextureFormat.rgba5551: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
+                            case RenderBase.OTextureFormat.rgb565: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
+                            case RenderBase.OTextureFormat.rgba4: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
+                            case RenderBase.OTextureFormat.la8: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
+                            case RenderBase.OTextureFormat.hilo8: tex.length = (textureSize.Width * textureSize.Height) * 2; break;
+                            case RenderBase.OTextureFormat.l8: tex.length = textureSize.Width * textureSize.Height; break;
+                            case RenderBase.OTextureFormat.a8: tex.length = textureSize.Width * textureSize.Height; break;
+                            case RenderBase.OTextureFormat.la4: tex.length = textureSize.Width * textureSize.Height; break;
+                            case RenderBase.OTextureFormat.l4: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
+                            case RenderBase.OTextureFormat.a4: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
+                            case RenderBase.OTextureFormat.etc1: tex.length = (textureSize.Width * textureSize.Height) >> 1; break;
+                            case RenderBase.OTextureFormat.etc1a4: tex.length = textureSize.Width * textureSize.Height; break;
+                            default: throw new Exception("OBCHTextureReplacer: Invalid texture format on BCH!");
+                        }
+
+                        while ((tex.length & 0x7f) > 0) tex.length++;
+
+                        data.Seek(tex.offset, SeekOrigin.Begin);
+                        byte[] buffer = new byte[textureSize.Width * textureSize.Height * 4];
+                        input.Read(buffer, 0, buffer.Length);
+                        Bitmap texture = TextureCodec.decode(
+                            buffer,
+                            textureSize.Width,
+                            textureSize.Height,
+                            fmt);
+
+                        tex.texture = new RenderBase.OTexture(texture, textureName);
+
+                        bch.textures.Add(tex);
                     }
 
-                    while ((tex.length & 0x7f) > 0) tex.length++;
-
-                    data.Seek(tex.offset, SeekOrigin.Begin);
-                    byte[] buffer = new byte[textureSize.Width * textureSize.Height * 4];
-                    input.Read(buffer, 0, buffer.Length);
-                    Bitmap texture = TextureCodec.decode(
-                        buffer,
-                        textureSize.Width,
-                        textureSize.Height,
-                        fmt);
-
-                    tex.texture = new RenderBase.OTexture(texture, textureName);
-
-                    bch.textures.Add(tex);
+                    bch.mainHeaderOffset = mainHeaderOffset;
+                    bch.gpuCommandsOffset = gpuCommandsOffset;
+                    bch.dataOffset = dataOffset;
+                    bch.relocationTableOffset = relocationTableOffset;
+                    bch.relocationTableLength = relocationTableLength;
                 }
-
-                //Materials
-                for (int mdlIndex = 0; mdlIndex < modelsPointerTableEntries; mdlIndex++)
+                else if(magic == "CTPK\u0001")
                 {
-                    data.Seek(modelsPointerTableOffset + (mdlIndex * 4), SeekOrigin.Begin);
-                    data.Seek(input.ReadUInt32() + mainHeaderOffset, SeekOrigin.Begin);
-                    data.Seek(0x34, SeekOrigin.Current);
+                    currentFile = fileName;
+                    data.Seek(4, SeekOrigin.Current);
+                    ushort ver = input.ReadUInt16();
+                    ushort numTexture = input.ReadUInt16();
+                    uint TextureSectionOffset = input.ReadUInt32();
+                    uint TextureSectionSize = input.ReadUInt32();
+                    uint HashSectionOffset = input.ReadUInt32();
+                    uint TextureInfoSection = input.ReadUInt32();
 
-                    uint materialsTableOffset = input.ReadUInt32() + mainHeaderOffset;
-                    uint materialsTableEntries = input.ReadUInt32();
+                    bch = new loadedBCH();
 
-                    for (int index = 0; index < materialsTableEntries; index++)
+                    for (int i = 0; i < numTexture; i++)
                     {
-                        if (backwardCompatibility < 0x21)
-                            data.Seek(materialsTableOffset + (index * 0x58), SeekOrigin.Begin);
-                        else
-                            data.Seek(materialsTableOffset + (index * 0x2c), SeekOrigin.Begin);
+                        data.Seek(0x20 * (i + 1), SeekOrigin.Begin);
+                        loadedTexture tex;
+                        tex.modified = false;
 
-                        loadedMaterial mat;
+                        uint textureNameOffset = input.ReadUInt32();
+                        string textureName = IOUtils.readString(input, textureNameOffset);
+                        tex.length = input.ReadInt32();
+                        tex.offset = input.ReadUInt32() + TextureSectionOffset;
+                        tex.type = (RenderBase.OTextureFormat)input.ReadUInt32();
+                        ushort Width = input.ReadUInt16();
+                        ushort Height = input.ReadUInt16();
+                        data.Seek(tex.offset, SeekOrigin.Begin);
+                        byte[] buffer = new byte[tex.length];
+                        input.Read(buffer, 0, buffer.Length);
+                        Bitmap texture = TextureCodec.decode(
+                            buffer,
+                            Width,
+                            Height,
+                            tex.type);
 
-                        data.Seek(0x10, SeekOrigin.Current);
-                        mat.gpuCommandsOffset = input.ReadUInt32() + gpuCommandsOffset;
-                        mat.gpuCommandsWordCount = input.ReadUInt32();
+                        tex.texture = new RenderBase.OTexture(texture, textureName);
 
-                        if (backwardCompatibility < 0x21)
-                            data.Seek(0x30, SeekOrigin.Current);
-                        else
-                            data.Seek(4, SeekOrigin.Current);
+                        tex.gpuCommandsOffset = 0;
+                        tex.gpuCommandsWordCount = 0;
 
-                        uint texture0Offset = input.ReadUInt32() + stringTableOffset;
-                        uint texture1Offset = input.ReadUInt32() + stringTableOffset;
-                        uint texture2Offset = input.ReadUInt32() + stringTableOffset;
-
-                        mat.texture0 = IOUtils.readString(input, texture0Offset);
-                        mat.texture1 = IOUtils.readString(input, texture1Offset);
-                        mat.texture2 = IOUtils.readString(input, texture2Offset);
-
-                        bch.materials.Add(mat);
+                        bch.textures.Add(tex);
                     }
                 }
-
-                bch.mainHeaderOffset = mainHeaderOffset;
-                bch.gpuCommandsOffset = gpuCommandsOffset;
-                bch.dataOffset = dataOffset;
-                bch.relocationTableOffset = relocationTableOffset;
-                bch.relocationTableLength = relocationTableLength;
             }
 
             updateTexturesList();
