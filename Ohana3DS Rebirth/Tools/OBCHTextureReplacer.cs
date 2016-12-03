@@ -26,29 +26,20 @@ namespace Ohana3DS_Rebirth.Tools
             public RenderBase.OTextureFormat type;
         }
 
-        private struct loadedMaterial
-        {
-            public string texture0;
-            public string texture1;
-            public string texture2;
-            public uint gpuCommandsOffset;
-            public uint gpuCommandsWordCount;
-        }
 
         private class loadedBCH
         {
+            public bool isBCH;
             public uint mainHeaderOffset;
             public uint gpuCommandsOffset;
             public uint dataOffset;
             public uint relocationTableOffset;
             public uint relocationTableLength;
             public List<loadedTexture> textures;
-            public List<loadedMaterial> materials;
 
             public loadedBCH()
             {
                 textures = new List<loadedTexture>();
-                materials = new List<loadedMaterial>();
             }
         }
 
@@ -59,6 +50,7 @@ namespace Ohana3DS_Rebirth.Tools
             InitializeComponent();
             parentForm = parent;
             TopMenu.Renderer = new OMenuStrip();
+            TextureTypeDrop.Items.AddRange(new string[] { "rgba8", "rgb8", "rgba5551","rgb565","rgba4","la8","hilo8","l8","a8","la4","l4","a4","etc1","etc1a4" });
         }
 
         private void OBCHTextureReplacer_KeyDown(object sender, KeyEventArgs e)
@@ -127,6 +119,7 @@ namespace Ohana3DS_Rebirth.Tools
                 string magic = IOUtils.readString(input, 0);
                 if (magic == "BCH")
                 {
+                    
                     currentFile = fileName;
                     data.Seek(4, SeekOrigin.Current);
                     byte backwardCompatibility = input.ReadByte();
@@ -156,7 +149,7 @@ namespace Ohana3DS_Rebirth.Tools
                     uint texturesPointerTableEntries = input.ReadUInt32();
 
                     bch = new loadedBCH();
-
+                    bch.isBCH = true;
                     //Textures
                     for (int index = 0; index < texturesPointerTableEntries; index++)
                     {
@@ -231,13 +224,13 @@ namespace Ohana3DS_Rebirth.Tools
                     uint TextureInfoSection = input.ReadUInt32();
 
                     bch = new loadedBCH();
-
+                    bch.isBCH = false;
                     for (int i = 0; i < numTexture; i++)
                     {
                         data.Seek(0x20 * (i + 1), SeekOrigin.Begin);
                         loadedTexture tex;
                         tex.modified = false;
-
+                        tex.gpuCommandsOffset = (uint)(0x20 * (i + 1));
                         uint textureNameOffset = input.ReadUInt32();
                         string textureName = IOUtils.readString(input, textureNameOffset);
                         tex.length = input.ReadInt32();
@@ -256,7 +249,6 @@ namespace Ohana3DS_Rebirth.Tools
 
                         tex.texture = new RenderBase.OTexture(texture, textureName);
 
-                        tex.gpuCommandsOffset = 0;
                         tex.gpuCommandsWordCount = 0;
 
                         bch.textures.Add(tex);
@@ -281,8 +273,19 @@ namespace Ohana3DS_Rebirth.Tools
             if (TextureList.SelectedIndex == -1) return;
 
             PicPreview.Image = bch.textures[TextureList.SelectedIndex].texture.texture;
+            TextureTypeDrop.Text = bch.textures[TextureList.SelectedIndex].type.ToString();
+            if(!bch.isBCH)
+                TextureTypeDrop.Enabled = true;
+            else
+                TextureTypeDrop.Enabled = false;
         }
-
+        private void TextureTypeDrop_Change(object sender, EventArgs e)
+        {
+            loadedTexture tex = bch.textures[TextureList.SelectedIndex];
+            bch.textures.RemoveAt(TextureList.SelectedIndex);
+            tex.type = findType();
+            bch.textures.Insert(TextureList.SelectedIndex, tex);
+        }
         private void BtnExport_Click(object sender, EventArgs e)
         {
             if (TextureList.SelectedIndex == -1) return;
@@ -382,8 +385,21 @@ namespace Ohana3DS_Rebirth.Tools
                     {
                         byte[] buffer = align(TextureCodec.encode(tex.texture.texture, tex.type));
                         int diff = buffer.Length - tex.length;
+                        if(bch.isBCH)
+                            replaceData(data, tex.offset, tex.length, buffer);
+                        else { 
+                            replaceData(data, tex.offset, buffer.Length, buffer);
+                            data.Seek(0xC, SeekOrigin.Begin);
+                            output.Write((uint)buffer.Length);
+                            data.Seek(tex.gpuCommandsOffset+4, SeekOrigin.Begin);
+                            output.Write((uint)buffer.Length);
+                            uint skip = input.ReadUInt32();
+                            output.Write((uint)tex.type);
+                            output.Write((ushort)tex.texture.texture.Width);
+                            output.Write((ushort)tex.texture.texture.Height);
 
-                        replaceData(data, tex.offset, tex.length, buffer);
+
+                        }
 
                         tex.modified = false;
                         updateTexture(i, tex);
@@ -430,5 +446,11 @@ namespace Ohana3DS_Rebirth.Tools
             bch.textures.RemoveAt(index);
             bch.textures.Insert(index, newTex);
         }
+        private RenderBase.OTextureFormat findType()
+        {
+            return (RenderBase.OTextureFormat)System.Enum.Parse(typeof(RenderBase.OTextureFormat), TextureTypeDrop.Text);
+        }
+
+        
     }
 }

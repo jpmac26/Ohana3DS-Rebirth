@@ -44,6 +44,7 @@
             this.MenuSaveAndPreview = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSeparator0 = new System.Windows.Forms.ToolStripSeparator();
             this.MenuExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.TextureTypeDrop = new System.Windows.Forms.ToolStripComboBox();
             this.ContentContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PicPreview)).BeginInit();
             this.SplitPanel.Panel1.SuspendLayout();
@@ -83,7 +84,7 @@
             this.TextureList.Margin = new System.Windows.Forms.Padding(0);
             this.TextureList.Name = "TextureList";
             this.TextureList.SelectedIndex = -1;
-            this.TextureList.Size = new System.Drawing.Size(288, 398);
+            this.TextureList.Size = new System.Drawing.Size(288, 395);
             this.TextureList.TabIndex = 17;
             this.TextureList.SelectedIndexChanged += new System.EventHandler(this.TextureList_SelectedIndexChanged);
             // 
@@ -139,7 +140,7 @@
             // 
             this.SplitPanel.BackColor = System.Drawing.Color.Black;
             this.SplitPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.SplitPanel.Location = new System.Drawing.Point(0, 44);
+            this.SplitPanel.Location = new System.Drawing.Point(0, 47);
             this.SplitPanel.Name = "SplitPanel";
             // 
             // SplitPanel.Panel1
@@ -151,7 +152,7 @@
             // 
             this.SplitPanel.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(16)))), ((int)(((byte)(16)))));
             this.SplitPanel.Panel2.Controls.Add(this.PicPreview);
-            this.SplitPanel.Size = new System.Drawing.Size(632, 428);
+            this.SplitPanel.Size = new System.Drawing.Size(632, 425);
             this.SplitPanel.SplitterDistance = 288;
             this.SplitPanel.TabIndex = 17;
             // 
@@ -178,10 +179,11 @@
             // TopMenu
             // 
             this.TopMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.MenuFile});
+            this.MenuFile,
+            this.TextureTypeDrop});
             this.TopMenu.Location = new System.Drawing.Point(0, 20);
             this.TopMenu.Name = "TopMenu";
-            this.TopMenu.Size = new System.Drawing.Size(632, 24);
+            this.TopMenu.Size = new System.Drawing.Size(632, 27);
             this.TopMenu.TabIndex = 16;
             // 
             // MenuFile
@@ -193,7 +195,7 @@
             this.MenuSeparator0,
             this.MenuExit});
             this.MenuFile.Name = "MenuFile";
-            this.MenuFile.Size = new System.Drawing.Size(37, 20);
+            this.MenuFile.Size = new System.Drawing.Size(37, 23);
             this.MenuFile.Text = "&File";
             // 
             // MenuOpen
@@ -237,6 +239,14 @@
             this.MenuExit.Text = "&Exit";
             this.MenuExit.Click += new System.EventHandler(this.MenuExit_Click);
             // 
+            // TextureTypeDrop
+            // 
+            this.TextureTypeDrop.Enabled = false;
+            this.TextureTypeDrop.Name = "TextureTypeDrop";
+            this.TextureTypeDrop.Size = new System.Drawing.Size(121, 23);
+            this.TextureTypeDrop.Text = "rgba8";
+            this.TextureTypeDrop.TextChanged += new System.EventHandler(this.TextureTypeDrop_Change);
+            // 
             // OBCHTextureReplacer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -279,5 +289,6 @@
         private System.Windows.Forms.ToolStripMenuItem MenuSaveAndPreview;
         private System.Windows.Forms.ToolStripSeparator MenuSeparator0;
         private System.Windows.Forms.ToolStripMenuItem MenuExit;
+        private System.Windows.Forms.ToolStripComboBox TextureTypeDrop;
     }
 }

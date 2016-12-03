@@ -571,6 +571,71 @@ namespace Ohana3DS_Rebirth.Ohana
                         }
                     }
                     break;
+                case RenderBase.OTextureFormat.etc1:
+                case RenderBase.OTextureFormat.etc1a4:
+                    int[] etc1Order = etc1Scramble(img.Width, img.Height);
+
+                    int i = 0;
+                    for (int tY = 0; tY < img.Height / 4; tY++)
+                    {
+                        for (int tX = 0; tX < img.Width / 4; tX++)
+                        {
+                            int TX = etc1Order[i] % (img.Width / 4);
+                            int TY = (etc1Order[i] - TX) / (img.Width / 4);
+                            outputOffset = (uint)((TX * 4) + (((TY * 4)) * (img.Width/4)))*2;
+                            if (format == RenderBase.OTextureFormat.etc1a4)
+                            {
+                                outputOffset = (uint)((TX * 4) + (((TY * 4)) * (img.Width / 4))) * 4;
+                                ulong alpha = 0;
+                                int iiii = 0;
+                                for (int y = 0; y < 4; y++)
+                                {
+                                    for (int x = 0; x < 4; x++)
+                                    {
+                                        long dataOffset = ((tX * 4) + (x) + (((tY * 4) + (y)) * img.Width)) * 4;
+                                        uint a = (uint)data[dataOffset+3]/16;
+                                        alpha |= (ulong)a << (iiii);
+                                        iiii+= 4;
+                                    }
+                                }
+                                output[outputOffset+7] = (byte)((alpha >> 56) & 0xFF);
+                                output[outputOffset+6] = (byte)((alpha >> 48) & 0xFF);
+                                output[outputOffset+5] = (byte)((alpha >> 40) & 0xFF);
+                                output[outputOffset+4] = (byte)((alpha >> 32) & 0xFF);
+                                output[outputOffset+3] = (byte)((alpha >> 24) & 0xFF);
+                                output[outputOffset+2] = (byte)((alpha >> 16) & 0xFF);
+                                output[outputOffset+1] = (byte)((alpha >> 8) & 0xFF);
+                                output[outputOffset+0] = (byte)(alpha & 0xFF);
+                                outputOffset += 8;
+                            }
+                            Color[] pixels = new Color[4 * 4];
+                            for (int yy = 0; yy < 4; yy++)
+                            {
+                                for (int xx = 0; xx < 4; xx++)
+                                {
+                                    long dataOffset = ((tX * 4) + (xx)  + (((tY * 4) + ( yy)) * img.Width)) * 4;
+                                    //if (TX + xx >= img.Width) pixels[yy * 4 + xx] = Color.Transparent;
+                                    //else if (TY + yy >= img.Height) pixels[yy * 4 + xx] = Color.Transparent;
+                                    pixels[yy * 4 + xx] = Color.FromArgb((int)data[dataOffset + 0] | (int)data[dataOffset+1]<<8 | (int)data[dataOffset + 2]<<16 | (int)data[dataOffset + 3] << 24);
+                                }
+                                
+                            }
+                            ulong ETC1Chunk = ETC1.GenETC1(pixels);
+                                output[outputOffset + 7] = (byte)((ETC1Chunk >> 56) & 0xFF);
+                                output[outputOffset + 6] = (byte)((ETC1Chunk >> 48) & 0xFF);
+                                output[outputOffset + 5] = (byte)((ETC1Chunk >> 40) & 0xFF);
+                                output[outputOffset + 4] = (byte)((ETC1Chunk >> 32) & 0xFF);
+                                output[outputOffset + 3] = (byte)((ETC1Chunk >> 24) & 0xFF);
+                                output[outputOffset + 2] = (byte)((ETC1Chunk >> 16) & 0xFF);
+                                output[outputOffset + 1] = (byte)((ETC1Chunk >> 8) & 0xFF);
+                                output[outputOffset + 0] = (byte)(ETC1Chunk & 0xFF);
+                                outputOffset += 8;
+                            i += 1;
+                        }
+                   }
+                    
+
+                    break;
 
                 default: throw new NotImplementedException();
             }
