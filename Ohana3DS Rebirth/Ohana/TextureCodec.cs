@@ -337,8 +337,12 @@ namespace Ohana3DS_Rebirth.Ohana
                                 int x = tileOrder[pixel] % 8;
                                 int y = (tileOrder[pixel] - x) / 8;
                                 long dataOffset = ((tX * 8) + x + ((tY * 8 + y) * img.Width)) * 4;
-
-                                Buffer.BlockCopy(data, (int)dataOffset, output, (int)outputOffset + 1, 3);
+                                byte b = (byte)(data[dataOffset]);
+                                byte g = (byte)(data[dataOffset + 1]);
+                                byte r = (byte)(data[dataOffset + 2]);
+                                output[outputOffset] = b;
+                                output[outputOffset + 1] = g;
+                                output[outputOffset + 2] = r;
                                 output[outputOffset] = data[dataOffset + 3];
 
                                 outputOffset += 4;
@@ -356,8 +360,12 @@ namespace Ohana3DS_Rebirth.Ohana
                                 int x = tileOrder[pixel] % 8;
                                 int y = (tileOrder[pixel] - x) / 8;
                                 long dataOffset = ((tX * 8) + x + ((tY * 8 + y) * img.Width)) * 4;
-
-                                Buffer.BlockCopy(data, (int)dataOffset, output, (int)outputOffset + 1, 3);
+                                byte b = (byte)(data[dataOffset]);
+                                byte g = (byte)(data[dataOffset + 1]);
+                                byte r = (byte)(data[dataOffset + 2]);
+                                output[outputOffset] = b;
+                                output[outputOffset + 1] = g;
+                                output[outputOffset + 2] = r;
 
                                 outputOffset += 3;
                             }

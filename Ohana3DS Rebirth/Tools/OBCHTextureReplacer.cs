@@ -10,6 +10,7 @@ using Ohana3DS_Rebirth.Ohana.Models.PICA200;
 
 namespace Ohana3DS_Rebirth.Tools
 {
+
     public partial class OBCHTextureReplacer : OForm
     {
         string currentFile;
@@ -50,7 +51,7 @@ namespace Ohana3DS_Rebirth.Tools
             InitializeComponent();
             parentForm = parent;
             TopMenu.Renderer = new OMenuStrip();
-            TextureTypeDrop.Items.AddRange(new string[] { "rgba8", "rgb8", "rgba5551","rgb565","rgba4","la8","hilo8","l8","a8","la4","l4","a4","etc1","etc1a4" });
+            TextureTypeDrop.Items.AddRange(new string[] { "rgba8", "rgb8", "rgba5551", "rgb565", "rgba4", "la8", "hilo8", "l8", "a8", "la4", "l4", "a4", "etc1", "etc1a4" });
         }
 
         private void OBCHTextureReplacer_KeyDown(object sender, KeyEventArgs e)
@@ -87,7 +88,7 @@ namespace Ohana3DS_Rebirth.Tools
         {
             using (OpenFileDialog openDlg = new OpenFileDialog())
             {
-                openDlg.Filter = "All supported files|*.bch;*.ctpk";
+                openDlg.Filter = "All supported files|*.bch;*.ctpk;*.pc|All|*.*";
 
                 if (openDlg.ShowDialog() == DialogResult.OK && File.Exists(openDlg.FileName))
                 {
@@ -109,17 +110,53 @@ namespace Ohana3DS_Rebirth.Tools
                 parentForm.open(currentFile);
             }
         }
-
+        private static uint peek(BinaryReader input)
+        {
+            uint value = input.ReadUInt32();
+            input.BaseStream.Seek(-4, SeekOrigin.Current);
+            return value;
+        }
         private bool open(string fileName)
         {
             using (FileStream data = new FileStream(fileName, FileMode.Open))
             {
                 BinaryReader input = new BinaryReader(data);
 
+                if (peek(input) == 0x00010000)
+                {
+                    currentFile = fileName;
+                    bch = new loadedBCH();
+                    bch.isBCH = false;
+                    packPNK(data,input,bch);
+                }
+                string magic2b = getMagic(input, 2);
+                if(magic2b == "PC")
+                {
+                    bch = new loadedBCH();
+                    bch.isBCH = false;
+                    currentFile = fileName;
+                    data.Seek(2, SeekOrigin.Current);
+                    ushort numEntrys = input.ReadUInt16();
+                    for(int i = 0;i < (int)numEntrys; i++)
+                    {
+                        data.Seek(4 + (i * 4), SeekOrigin.Begin);
+                        uint offset = input.ReadUInt32();
+                        uint end = input.ReadUInt32();
+                        uint lenth = end - offset;
+                        long rtn = data.Position;
+                        data.Seek(offset, SeekOrigin.Begin);
+                        if (lenth > 4) { 
+                        if (peek(input) == 0x15041213)
+                        {
+                            bch.textures.Add(loadPKM(data, input));
+                        }
+                        }
+                    }
+                }
                 string magic = IOUtils.readString(input, 0);
                 if (magic == "BCH")
                 {
-                    
+
                     currentFile = fileName;
                     data.Seek(4, SeekOrigin.Current);
                     byte backwardCompatibility = input.ReadByte();
@@ -212,7 +249,7 @@ namespace Ohana3DS_Rebirth.Tools
                     bch.relocationTableOffset = relocationTableOffset;
                     bch.relocationTableLength = relocationTableLength;
                 }
-                else if(magic == "CTPK\u0001")
+                else if (magic == "CTPK\u0001")
                 {
                     currentFile = fileName;
                     data.Seek(4, SeekOrigin.Current);
@@ -259,7 +296,92 @@ namespace Ohana3DS_Rebirth.Tools
             updateTexturesList();
             return true;
         }
+        private void packPNK(FileStream data, BinaryReader input, loadedBCH bch)
+        {
+            input.ReadUInt32();
 
+
+
+            uint[] sectionsCnt = new uint[5];
+
+            for (int i = 0; i < 5; i++)
+            {
+                sectionsCnt[i] = input.ReadUInt32(); //Count for each section on the file (total 5)
+            }
+            uint baseAddr = (uint)data.Position;
+
+            for (int sect = 0; sect < 5; sect++)
+            {
+                uint count = sectionsCnt[sect];
+
+                for (int i = 0; i < count; i++)
+                {
+                    data.Seek(baseAddr + i * 4, SeekOrigin.Begin);
+                    data.Seek(input.ReadUInt32(), SeekOrigin.Begin);
+
+                    byte nameStrLen = input.ReadByte();
+                    string name = IOUtils.readStringWithLength(input, nameStrLen);
+                    uint descAddress = input.ReadUInt32();
+
+                    data.Seek(descAddress, SeekOrigin.Begin);
+
+                    if (sect == 1)
+                    {
+                        bch.textures.Add(loadPKM(data, input));
+                    }
+
+                }
+                baseAddr += count * 4;
+            }
+        }
+        private loadedTexture loadPKM(FileStream data, BinaryReader input)
+        {
+            loadedTexture tex;
+            tex.modified = false;
+            long descAddress2 = data.Position;
+
+            data.Seek(descAddress2 + 0x18, SeekOrigin.Begin);
+            int texLength = input.ReadInt32();
+            data.Seek(descAddress2 + 0x28, SeekOrigin.Begin);
+            string textureName = IOUtils.readStringWithLength(input, 0x40);
+
+            data.Seek(descAddress2 + 0x68, SeekOrigin.Begin);
+            ushort width = input.ReadUInt16();
+            ushort height = input.ReadUInt16();
+            ushort texFormat = input.ReadUInt16();
+            ushort texMipMaps = input.ReadUInt16();
+
+            data.Seek(0x10, SeekOrigin.Current);
+            tex.offset = (uint)data.Position;
+            byte[] texBuffer = input.ReadBytes(texLength);
+
+            RenderBase.OTextureFormat fmt = RenderBase.OTextureFormat.dontCare;
+
+            switch (texFormat)
+            {
+                case 0x2: fmt = RenderBase.OTextureFormat.rgb565; break;
+                case 0x3: fmt = RenderBase.OTextureFormat.rgb8; break;
+                case 0x4: fmt = RenderBase.OTextureFormat.rgba8; break;
+                case 0x17: fmt = RenderBase.OTextureFormat.rgba5551; break;
+                case 0x23: fmt = RenderBase.OTextureFormat.la8; break;
+                case 0x24: fmt = RenderBase.OTextureFormat.hilo8; break;
+                case 0x25: fmt = RenderBase.OTextureFormat.l8; break;
+                case 0x26: fmt = RenderBase.OTextureFormat.a8; break;
+                case 0x27: fmt = RenderBase.OTextureFormat.la4; break;
+                case 0x28: fmt = RenderBase.OTextureFormat.l4; break;
+                case 0x29: fmt = RenderBase.OTextureFormat.a4; break;
+                case 0x2a: fmt = RenderBase.OTextureFormat.etc1; break;
+                case 0x2b: fmt = RenderBase.OTextureFormat.etc1a4; break;
+            }
+
+            Bitmap texture = TextureCodec.decode(texBuffer, width, height, fmt);
+            tex.texture = new RenderBase.OTexture(texture, textureName);
+            tex.type = fmt;
+            tex.gpuCommandsOffset = 0;
+            tex.gpuCommandsWordCount = 0;
+            tex.length = texLength;
+            return tex;
+        }
         private void updateTexturesList()
         {
             TextureList.flush();
@@ -419,7 +541,12 @@ namespace Ohana3DS_Rebirth.Tools
             Buffer.BlockCopy(input, 0, output, 0, input.Length);
             return output;
         }
-
+        private static string getMagic(BinaryReader input, uint length)
+        {
+            string magic = IOUtils.readString(input, 0, length);
+            input.BaseStream.Seek(0, SeekOrigin.Begin);
+            return magic;
+        }
         private void replaceCommand(Stream data, BinaryWriter output, uint newVal)
         {
             data.Seek(-8, SeekOrigin.Current);
