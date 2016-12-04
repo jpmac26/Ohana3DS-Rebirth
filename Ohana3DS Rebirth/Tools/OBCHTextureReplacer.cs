@@ -274,9 +274,9 @@ namespace Ohana3DS_Rebirth.Tools
 
             PicPreview.Image = bch.textures[TextureList.SelectedIndex].texture.texture;
             TextureTypeDrop.Text = bch.textures[TextureList.SelectedIndex].type.ToString();
-            if(!bch.isBCH)
+            /*if(!bch.isBCH)
                 TextureTypeDrop.Enabled = true;
-            else
+            else*/
                 TextureTypeDrop.Enabled = false;
         }
         private void TextureTypeDrop_Change(object sender, EventArgs e)
@@ -385,9 +385,9 @@ namespace Ohana3DS_Rebirth.Tools
                     {
                         byte[] buffer = align(TextureCodec.encode(tex.texture.texture, tex.type));
                         int diff = buffer.Length - tex.length;
-                        if(bch.isBCH)
-                            replaceData(data, tex.offset, tex.length, buffer);
-                        else { 
+                        //if(bch.isBCH)
+                        replaceData(data, tex.offset, tex.length, buffer);
+                        /*else { 
                             replaceData(data, tex.offset, buffer.Length, buffer);
                             data.Seek(0xC, SeekOrigin.Begin);
                             output.Write((uint)buffer.Length);
@@ -399,7 +399,7 @@ namespace Ohana3DS_Rebirth.Tools
                             output.Write((ushort)tex.texture.texture.Height);
 
 
-                        }
+                        }*/
 
                         tex.modified = false;
                         updateTexture(i, tex);

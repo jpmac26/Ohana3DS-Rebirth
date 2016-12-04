@@ -605,7 +605,7 @@ namespace Ohana3DS_Rebirth.Ohana
                                 output[outputOffset+3] = (byte)((alpha >> 24) & 0xFF);
                                 output[outputOffset+2] = (byte)((alpha >> 16) & 0xFF);
                                 output[outputOffset+1] = (byte)((alpha >> 8) & 0xFF);
-                                output[outputOffset+0] = (byte)(alpha & 0xFF);
+                                output[outputOffset] = (byte)(alpha & 0xFF);
                                 outputOffset += 8;
                             }
                             Color[] pixels = new Color[4 * 4];
