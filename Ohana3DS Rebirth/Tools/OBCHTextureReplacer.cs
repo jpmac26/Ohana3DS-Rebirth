@@ -88,7 +88,7 @@ namespace Ohana3DS_Rebirth.Tools
         {
             using (OpenFileDialog openDlg = new OpenFileDialog())
             {
-                openDlg.Filter = "All supported files|*.bch;*.ctpk;*.pc|All|*.*";
+                openDlg.Filter = "All supported files|*.bch;*.ctpk;*.pc;*.cm|All|*.*";
 
                 if (openDlg.ShowDialog() == DialogResult.OK && File.Exists(openDlg.FileName))
                 {
@@ -130,7 +130,7 @@ namespace Ohana3DS_Rebirth.Tools
                     packPNK(data,input,bch);
                 }
                 string magic2b = getMagic(input, 2);
-                if(magic2b == "PC")
+                if(magic2b == "PC" || magic2b == "CM")
                 {
                     bch = new loadedBCH();
                     bch.isBCH = false;
@@ -145,11 +145,17 @@ namespace Ohana3DS_Rebirth.Tools
                         uint lenth = end - offset;
                         long rtn = data.Position;
                         data.Seek(offset, SeekOrigin.Begin);
-                        if (lenth > 4) { 
-                        if (peek(input) == 0x15041213)
+                        if (magic2b == "CM" & i == 0)
+                        {
+                            packPNK(data, input, bch);
+                        }
+                        if (lenth > 4) {
+                            if(magic2b == "PC") { 
+                                if (peek(input) == 0x15041213)
                         {
                             bch.textures.Add(loadPKM(data, input));
                         }
+                            }
                         }
                     }
                 }
@@ -298,6 +304,7 @@ namespace Ohana3DS_Rebirth.Tools
         }
         private void packPNK(FileStream data, BinaryReader input, loadedBCH bch)
         {
+            uint veryBase = (uint)data.Position;
             input.ReadUInt32();
 
 
@@ -317,11 +324,11 @@ namespace Ohana3DS_Rebirth.Tools
                 for (int i = 0; i < count; i++)
                 {
                     data.Seek(baseAddr + i * 4, SeekOrigin.Begin);
-                    data.Seek(input.ReadUInt32(), SeekOrigin.Begin);
+                    data.Seek(input.ReadUInt32()+veryBase, SeekOrigin.Begin);
 
                     byte nameStrLen = input.ReadByte();
                     string name = IOUtils.readStringWithLength(input, nameStrLen);
-                    uint descAddress = input.ReadUInt32();
+                    uint descAddress = input.ReadUInt32() + veryBase;
 
                     data.Seek(descAddress, SeekOrigin.Begin);
 
