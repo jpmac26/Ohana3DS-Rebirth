@@ -596,10 +596,10 @@ namespace Ohana3DS_Rebirth.Ohana
                                 outputOffset = (uint)((TX * 4) + (((TY * 4)) * (img.Width / 4))) * 4;
                                 ulong alpha = 0;
                                 int iiii = 0;
-                                for (int y = 0; y < 4; y++)
+                                for (int x = 0; x < 4; x++)
                                 {
-                                    for (int x = 0; x < 4; x++)
-                                    {
+                                 for (int y = 0; y < 4; y++)
+                                        {
                                         long dataOffset = ((tX * 4) + (x) + (((tY * 4) + (y)) * img.Width)) * 4;
                                         uint a = (uint)data[dataOffset+3]/16;
                                         alpha |= (ulong)a << (iiii);
