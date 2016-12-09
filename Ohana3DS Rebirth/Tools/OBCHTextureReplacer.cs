@@ -129,6 +129,13 @@ namespace Ohana3DS_Rebirth.Tools
                     bch.isBCH = false;
                     packPNK(data,input,bch);
                 }
+                if (peek(input) == 0x15041213)
+                {
+                    currentFile = fileName;
+                    bch = new loadedBCH();
+                    bch.isBCH = false;
+                    bch.textures.Add(loadPKM(data, input));
+                }
                 string magic2b = getMagic(input, 2);
                 if(magic2b == "PC" || magic2b == "CM")
                 {

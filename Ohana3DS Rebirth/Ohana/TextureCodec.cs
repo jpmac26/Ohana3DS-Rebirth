@@ -340,9 +340,9 @@ namespace Ohana3DS_Rebirth.Ohana
                                 byte b = (byte)(data[dataOffset]);
                                 byte g = (byte)(data[dataOffset + 1]);
                                 byte r = (byte)(data[dataOffset + 2]);
-                                output[outputOffset] = b;
-                                output[outputOffset + 1] = g;
-                                output[outputOffset + 2] = r;
+                                output[outputOffset+1] = b;
+                                output[outputOffset + 2] = g;
+                                output[outputOffset + 3] = r;
                                 output[outputOffset] = data[dataOffset + 3];
 
                                 outputOffset += 4;
