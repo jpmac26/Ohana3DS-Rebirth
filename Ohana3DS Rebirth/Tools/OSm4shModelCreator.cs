@@ -73,30 +73,12 @@ namespace Ohana3DS_Rebirth.Tools
 
                 writer.Write((ushort)6);
                 writer.Write((ushort)0xffff);
-                writer.Write((uint)0);
                 writer.Write((uint)1);
+                writer.Write((uint)0);
                 writer.Write((uint)model.mesh.Count);
 
                 List<mesh> meshes = new List<mesh>();
                 foreach (RenderBase.OMesh mesh in model.mesh) meshes.Add(createMesh(mesh));
-
-                writer.Write((uint)5); //attributesCount - getVtxDescriptor
-                writer.Write((uint)0); //Position
-                writer.Write((uint)3); //SignedSingle
-                writer.Write((Single)0); //idk what to put in
-                writer.Write((uint)1); //Normal
-                writer.Write((uint)2); //SignedByte
-                writer.Write((Single)0); //idk what to put in
-                writer.Write((uint)3); //uvCord0
-                writer.Write((uint)3); //SignedByte
-                writer.Write((Single)3); //idk what to put in
-                writer.Write((uint)5); //BoneIndex
-                writer.Write((uint)1); //unSignedByte
-                writer.Write((Single)1); //idk what to put in
-                writer.Write((uint)6); //BoneWeight
-                writer.Write((uint)1); //unSignedByte
-                writer.Write((Single)0.1); //idk what to put in
-                writer.Write((uint)0xFFFFFFFF); // Need to get this l8r
 
                 foreach (mesh m in meshes)
                 {
@@ -173,7 +155,8 @@ namespace Ohana3DS_Rebirth.Tools
             output.descriptor.attributes = new List<attributeDescriptor>();
 
             output.descriptor.attributes.Add(new attributeDescriptor(0, 0, 1f)); //Position
-            if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(1, 0, 1f));
+            output.descriptor.attributes.Add(new attributeDescriptor(2, 1, 0.003f)); //color
+            //if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(1, 0, 1f));
             if (input.texUVCount > 0) output.descriptor.attributes.Add(new attributeDescriptor(3, 0, 1f));
             if (input.hasNode) output.descriptor.attributes.Add(new attributeDescriptor(5, 1, 1f));
             if (input.hasWeight) output.descriptor.attributes.Add(new attributeDescriptor(6, 1, 0.00392156862f));
@@ -189,13 +172,13 @@ namespace Ohana3DS_Rebirth.Tools
                     writer.Write(vtx.position.y);
                     writer.Write(vtx.position.z);
 
-                    if (optimized.hasNormal)
+                    /*if (optimized.hasNormal)
                     {
                         writer.Write(vtx.normal.x);
                         writer.Write(vtx.normal.y);
                         writer.Write(vtx.normal.z);
-                    }
-
+                    }*/
+                    writer.Write((uint)0xFFFFFFFF);
                     if (optimized.texUVCount > 0)
                     {
                         writer.Write(vtx.texture0.x);
