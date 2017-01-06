@@ -155,8 +155,8 @@ namespace Ohana3DS_Rebirth.Tools
             output.descriptor.attributes = new List<attributeDescriptor>();
 
             output.descriptor.attributes.Add(new attributeDescriptor(0, 0, 1f)); //Position
+            //if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(0, 0, 1f));
             output.descriptor.attributes.Add(new attributeDescriptor(2, 1, 0.003f)); //color
-            //if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(1, 0, 1f));
             if (input.texUVCount > 0) output.descriptor.attributes.Add(new attributeDescriptor(3, 0, 1f));
             if (input.hasNode) output.descriptor.attributes.Add(new attributeDescriptor(5, 1, 1f));
             if (input.hasWeight) output.descriptor.attributes.Add(new attributeDescriptor(6, 1, 0.00392156862f));

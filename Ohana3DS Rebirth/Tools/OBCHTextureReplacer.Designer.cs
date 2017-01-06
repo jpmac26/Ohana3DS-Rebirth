@@ -45,6 +45,9 @@
             this.MenuSeparator0 = new System.Windows.Forms.ToolStripSeparator();
             this.MenuExit = new System.Windows.Forms.ToolStripMenuItem();
             this.TextureTypeDrop = new System.Windows.Forms.ToolStripComboBox();
+            this.MipSelect = new System.Windows.Forms.ToolStripComboBox();
+            this.mipToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.typeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ContentContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PicPreview)).BeginInit();
             this.SplitPanel.Panel1.SuspendLayout();
@@ -180,7 +183,10 @@
             // 
             this.TopMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuFile,
-            this.TextureTypeDrop});
+            this.typeToolStripMenuItem,
+            this.TextureTypeDrop,
+            this.mipToolStripMenuItem,
+            this.MipSelect});
             this.TopMenu.Location = new System.Drawing.Point(0, 20);
             this.TopMenu.Name = "TopMenu";
             this.TopMenu.Size = new System.Drawing.Size(632, 27);
@@ -247,6 +253,30 @@
             this.TextureTypeDrop.Text = "rgba8";
             this.TextureTypeDrop.TextChanged += new System.EventHandler(this.TextureTypeDrop_Change);
             // 
+            // MipSelect
+            // 
+            this.MipSelect.Enabled = false;
+            this.MipSelect.Name = "MipSelect";
+            this.MipSelect.Size = new System.Drawing.Size(75, 23);
+            this.MipSelect.Text = "1";
+            this.MipSelect.TextChanged += new System.EventHandler(this.MipLayerChanged);
+            // 
+            // mipToolStripMenuItem
+            // 
+            this.mipToolStripMenuItem.Enabled = false;
+            this.mipToolStripMenuItem.Name = "mipToolStripMenuItem";
+            this.mipToolStripMenuItem.ShowShortcutKeys = false;
+            this.mipToolStripMenuItem.Size = new System.Drawing.Size(40, 23);
+            this.mipToolStripMenuItem.Text = "Mip";
+            // 
+            // typeToolStripMenuItem
+            // 
+            this.typeToolStripMenuItem.Enabled = false;
+            this.typeToolStripMenuItem.Name = "typeToolStripMenuItem";
+            this.typeToolStripMenuItem.ShowShortcutKeys = false;
+            this.typeToolStripMenuItem.Size = new System.Drawing.Size(44, 23);
+            this.typeToolStripMenuItem.Text = "Type";
+            // 
             // OBCHTextureReplacer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -290,5 +320,8 @@
         private System.Windows.Forms.ToolStripSeparator MenuSeparator0;
         private System.Windows.Forms.ToolStripMenuItem MenuExit;
         private System.Windows.Forms.ToolStripComboBox TextureTypeDrop;
+        private System.Windows.Forms.ToolStripComboBox MipSelect;
+        private System.Windows.Forms.ToolStripMenuItem typeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mipToolStripMenuItem;
     }
 }
