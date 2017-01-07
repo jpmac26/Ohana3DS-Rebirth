@@ -237,15 +237,15 @@ namespace Ohana3DS_Rebirth.Tools
                         Size textureSize = textureCommands.getTexUnit0Size();
                         tex.type = fmt;
 
-                        int addSize = 0;
-
+                        int OGW = textureSize.Width;
+                        int OGH = textureSize.Height;
                         for (int i = 0; i < 4; i++) {
-                            textureSize.Width = textureSize.Width / Convert.ToInt32(Math.Pow(2, i));
-                            textureSize.Height = textureSize.Height / Convert.ToInt32(Math.Pow(2, i));
+                            textureSize.Width = OGW / Convert.ToInt32(Math.Pow(2, i));
+                            textureSize.Height = OGH / Convert.ToInt32(Math.Pow(2, i));
                             tex.length = returnSize(fmt, textureSize.Width, textureSize.Height);
 
                             if(textureSize.Height > 4 & textureSize.Width > 4) { 
-                        data.Seek(tex.offset+ addSize, SeekOrigin.Begin);
+                        data.Seek(tex.offset, SeekOrigin.Begin);
                         byte[] buffer = new byte[tex.length];
 
                         //data.Seek(tex.length + returnSize(fmt, textureSize.Width / 2, textureSize.Height / 2), SeekOrigin.Current);
@@ -259,8 +259,9 @@ namespace Ohana3DS_Rebirth.Tools
 
                         tex.texture = new RenderBase.OTexture(texture, textureName);
 
-                            bch.mips[i].textures.Add(tex);
-                                addSize += tex.length;
+                                bch.mips[i].textures.Add(tex);
+                                tex.offset = (uint)data.Position;
+
                             }
                         }
                     }
