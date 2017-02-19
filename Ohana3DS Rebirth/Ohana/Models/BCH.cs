@@ -1609,7 +1609,7 @@ namespace Ohana3DS_Rebirth.Ohana.Models
                     obj.materialId = objects[objIndex].materialId;
                     obj.renderPriority = objects[objIndex].renderPriority;
                     if (objects[objIndex].nodeId < objectName.Length) obj.name = objectName[objects[objIndex].nodeId]; else obj.name = "mesh" + objIndex.ToString();
-                    obj.isVisible = (nodeVisibility & (1 << objects[objIndex].nodeId)) > 0;
+                    obj.isVisible = true;
 
                     //Vertices
                     data.Seek(objects[objIndex].vshAttributesBufferCommandsOffset, SeekOrigin.Begin);

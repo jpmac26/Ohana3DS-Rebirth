@@ -61,7 +61,7 @@ namespace Ohana3DS_Rebirth.Tools
             parentForm = parent;
             TopMenu.Renderer = new OMenuStrip();
             TextureTypeDrop.Items.AddRange(new string[] { "rgba8", "rgb8", "rgba5551", "rgb565", "rgba4", "la8", "hilo8", "l8", "a8", "la4", "l4", "a4", "etc1", "etc1a4" });
-            MipSelect.Items.AddRange(new string[] { "1", "2", "3", "4" });
+            MipSelect.Items.AddRange(new string[] { "1", "2", "3", "4", "5", "6" });
         }
 
         private void OBCHTextureReplacer_KeyDown(object sender, KeyEventArgs e)
@@ -212,7 +212,7 @@ namespace Ohana3DS_Rebirth.Tools
 
                     bch = new loadedBCH();
                     bch.isBCH = true;
-                    for(int i = 0;i<4;i++) bch.mips.Add(new MIPlayer());
+                    for(int i = 0;i<6;i++) bch.mips.Add(new MIPlayer());
                     MipSelect.Enabled = true;
 
                     //Textures
@@ -239,12 +239,12 @@ namespace Ohana3DS_Rebirth.Tools
 
                         int OGW = textureSize.Width;
                         int OGH = textureSize.Height;
-                        for (int i = 0; i < 4; i++) {
+                        for (int i = 0; i < 6; i++) {
                             textureSize.Width = OGW / Convert.ToInt32(Math.Pow(2, i));
                             textureSize.Height = OGH / Convert.ToInt32(Math.Pow(2, i));
                             tex.length = returnSize(fmt, textureSize.Width, textureSize.Height);
 
-                            if(textureSize.Height > 4 & textureSize.Width > 4) { 
+                            if(textureSize.Height >= 8 & textureSize.Width >= 8) { 
                         data.Seek(tex.offset, SeekOrigin.Begin);
                         byte[] buffer = new byte[tex.length];
 

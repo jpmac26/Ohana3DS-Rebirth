@@ -84,7 +84,9 @@ namespace Ohana3DS_Rebirth.Tools
                 {
                     //Face
                     writer.Write((uint)1);//Faces count
-                    writer.Write(m.descriptor.nodes.Count);
+                    //writer.Write(m.descriptor.nodes.Count);
+                    writer.Write((uint)1);//Dummy
+                    writer.Write((uint)0);//Node
                     foreach (uint n in m.descriptor.nodes) writer.Write(n);
                     writer.Write(m.indexBuffer.Length / 2);
 
@@ -155,7 +157,7 @@ namespace Ohana3DS_Rebirth.Tools
             output.descriptor.attributes = new List<attributeDescriptor>();
 
             output.descriptor.attributes.Add(new attributeDescriptor(0, 0, 1f)); //Position
-            //if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(0, 0, 1f));
+            if (input.hasNormal) output.descriptor.attributes.Add(new attributeDescriptor(1, 0, 1f));
             output.descriptor.attributes.Add(new attributeDescriptor(2, 1, 0.003f)); //color
             if (input.texUVCount > 0) output.descriptor.attributes.Add(new attributeDescriptor(3, 0, 1f));
             if (input.hasNode) output.descriptor.attributes.Add(new attributeDescriptor(5, 1, 1f));
@@ -172,12 +174,12 @@ namespace Ohana3DS_Rebirth.Tools
                     writer.Write(vtx.position.y);
                     writer.Write(vtx.position.z);
 
-                    /*if (optimized.hasNormal)
+                    if (optimized.hasNormal)
                     {
                         writer.Write(vtx.normal.x);
                         writer.Write(vtx.normal.y);
                         writer.Write(vtx.normal.z);
-                    }*/
+                    }
                     writer.Write((uint)0xFFFFFFFF);
                     if (optimized.texUVCount > 0)
                     {
