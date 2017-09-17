@@ -98,7 +98,7 @@ namespace Ohana3DS_Rebirth.Tools
         {
             using (OpenFileDialog openDlg = new OpenFileDialog())
             {
-                openDlg.Filter = "All supported files|*.bch;*.ctpk;*.pc;*.cm|All|*.*";
+                openDlg.Filter = "All supported files|*.bch;*.ctpk;*.pc;*.cm;*.3dst|All|*.*";
 
                 if (openDlg.ShowDialog() == DialogResult.OK && File.Exists(openDlg.FileName))
                 {
@@ -271,6 +271,45 @@ namespace Ohana3DS_Rebirth.Tools
                     bch.dataOffset = dataOffset;
                     bch.relocationTableOffset = relocationTableOffset;
                     bch.relocationTableLength = relocationTableLength;
+                }
+                else if (magic == "3DST\u0003")
+                {
+                    
+                    bch = new loadedBCH();
+                    bch.isBCH = false;
+                    bch.mips.Add(new MIPlayer());
+
+                    MipSelect.Enabled = false;
+                    loadedTexture tex;
+                    tex.modified = false;
+                    tex.offset = 0x20;
+
+                    currentFile = fileName;
+                    data.Seek(8, SeekOrigin.Begin);
+                    uint texFormat = input.ReadUInt32();
+                    RenderBase.OTextureFormat fmt = RenderBase.OTextureFormat.dontCare;
+                    switch (texFormat)
+                    {
+                        case 0: fmt = RenderBase.OTextureFormat.rgba8; break;
+                        case 1: fmt = RenderBase.OTextureFormat.rgb8; break;
+
+                        case 2: fmt = RenderBase.OTextureFormat.rgba5551; break;
+                        case 3: fmt = RenderBase.OTextureFormat.rgb8; break;
+                        case 4: fmt = RenderBase.OTextureFormat.rgba4; break;
+                        case 9: fmt = RenderBase.OTextureFormat.la4; break;
+                    }
+                    int Width = input.ReadInt32();
+                    int Height = input.ReadInt32();
+                    tex.length = returnSize(fmt, Width, Height);
+                    data.Seek(tex.offset, SeekOrigin.Begin);
+                    byte[] buffer = new byte[tex.length];
+                    input.Read(buffer, 0, tex.length);
+                    Bitmap texture = TextureCodec.decode(buffer, Width, Height, fmt);
+                    tex.texture = new RenderBase.OTexture(texture, "Texure");
+                    tex.type = fmt;
+                    tex.gpuCommandsOffset = 0;
+                    tex.gpuCommandsWordCount = 0;
+                    bch.mips[0].textures.Add(tex);
                 }
                 else if (magic == "CTPK\u0001")
                 {

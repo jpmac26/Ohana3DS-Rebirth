@@ -308,6 +308,7 @@ namespace Ohana3DS_Rebirth.Ohana
                     }
 
                     break;
+               
             }
 
             return TextureUtils.getBitmap(output.ToArray(), width, height);

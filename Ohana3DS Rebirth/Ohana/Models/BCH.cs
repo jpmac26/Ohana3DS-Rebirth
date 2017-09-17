@@ -228,6 +228,9 @@ namespace Ohana3DS_Rebirth.Ohana.Models
                         data.Seek((offset * 4) + header.mainHeaderOffset, SeekOrigin.Begin);
                         writer.Write(peek(input) + header.dataOffset);
                         break;
+                    default:
+                        Console.Write("Unk Flag " + String.Format("{0:x}", flags) +"\n");
+                        break;
                 }
 
                 //The moron that designed the format used different flags on different versions, instead of keeping compatibility.

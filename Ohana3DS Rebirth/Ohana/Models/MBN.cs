@@ -92,7 +92,6 @@ namespace Ohana3DS_Rebirth.Ohana.Models
 
             List<vtxEntry> vtxDescriptors = new List<vtxEntry>();
             List<idxEntry> idxDescriptors = new List<idxEntry>();
-
             for (int i = 0; i < meshCount; i++)
             {
                 if (mode == 1 && i == 0) vtxDescriptors.Add(getVtxDescriptor(input));
@@ -204,6 +203,8 @@ namespace Ohana3DS_Rebirth.Ohana.Models
                         {
                             vtxAttribute att = currVertex.attributes[k];
                             int pos = (int)(index * currVertex.stride + att.offset);
+                            if (pos > vtxBuffer.Length)
+                                Console.Write("WTHM8");
                             float scale = att.scale;
                             switch (currVertex.attributes[k].type)
                             {

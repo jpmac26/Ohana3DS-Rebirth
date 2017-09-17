@@ -148,7 +148,7 @@ namespace Ohana3DS_Rebirth.Ohana.Models.GenericFormats
                 int objectIndex = 0;
                 foreach (RenderBase.OMesh obj in mdl.mesh)
                 {
-                    string textureName = mdl.material[obj.materialId].name0 ?? "material_" + objectIndex.ToString();
+                    string textureName =   objectIndex.ToString() + ":0" ;
 
                     foreach (RenderBase.OVertex vertex in obj.vertices)
                     {
